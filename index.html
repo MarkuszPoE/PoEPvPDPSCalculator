@@ -1,0 +1,1078 @@
+<!DOCTYPE html>
+<html class=" idce_315 idc0_315"><head>
+<meta http-equiv="content-type" content="text/html; charset=windows-1252">
+	<title>PvP Tooltip DPS calculator by Markusz</title>
+	<meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+	<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.6.0/jquery.min.js"></script>
+			
+	<script type="text/javascript">
+
+	var saveCounter = 1;
+	var dmgs = {};
+	var formulaVersion = '3.8';
+	
+	function calc(event) {
+		var targetInputFieldId = "";
+		if (event) {
+			targetInputFieldId = $(event.target).attr("id");
+		}
+		/* Init */
+		var fireMin = parseFloat($("#fireMin").val());
+		var fireMax = parseFloat($("#fireMax").val());
+		var firePen = parseFloat($("#firePen").val());
+		var coldMin = parseFloat($("#coldMin").val());
+		var coldMax = parseFloat($("#coldMax").val());
+		var coldPen = parseFloat($("#coldPen").val());
+		var lightMin = parseFloat($("#lightMin").val());
+		var lightMax = parseFloat($("#lightMax").val());
+		var lightPen = parseFloat($("#lightPen").val());
+		var physMin = parseFloat($("#physMin").val());
+		var physMax = parseFloat($("#physMax").val());
+		var chaosMin = parseFloat($("#chaosMin").val());
+		var chaosMax = parseFloat($("#chaosMax").val());
+		var usePS = parseFloat($("#usePS").val());
+		var useTime = parseFloat($("#useTime").val());
+		var overrideUseTime = parseFloat($("#overrideUseTime").val());
+		var critChance = parseFloat($("#critChance").val());
+		var critMulti = parseFloat($("#critMulti").val());
+		var acc = parseFloat($("#acc").val());
+		var hitsPerUse = parseFloat($("#hitsPerUse").val());
+		var mult1 = parseFloat($("#mult1").val());
+		var mult2 = parseFloat($("#mult2").val());
+		var mult3 = parseFloat($("#mult3").val());
+		var multPvP = parseFloat($("#multPvP").val());
+		var oFireRes = parseFloat($("#oFireRes").val());
+		var oColdRes = parseFloat($("#oColdRes").val());
+		var oLightRes = parseFloat($("#oLightRes").val());
+		var oChaosRes = parseFloat($("#oChaosRes").val());
+		var oEvasion = parseFloat($("#oEvasion").val());
+		var oArmour = parseFloat($("#oArmour").val());
+		var oCritRed = parseFloat($("#oCritRed").val());
+		var monsterEvasion = 4000;
+		var fireAvg = fireMin, coldAvg = coldMin, lightAvg = lightMin, physAvg = physMin, chaosAvg = chaosMin;
+		
+		/* Invalid data handling */
+		if (isNaN(fireMin)) fireMin = 0;
+		if (isNaN(coldMin)) coldMin = 0;
+		if (isNaN(lightMin)) lightMin = 0;
+		if (isNaN(physMin)) physMin = 0;
+		if (isNaN(chaosMin)) chaosMin = 0;
+		
+		if (isNaN(fireMax)) fireMax = fireMin;
+		if (isNaN(coldMax)) coldMax = coldMin;
+		if (isNaN(lightMax)) lightMax = lightMin;
+		if (isNaN(physMax)) physMax = physMin;
+		if (isNaN(chaosMax)) chaosMax = chaosMin;
+		
+		if (!isNaN(usePS)) {
+			useTime = 1 / usePS;
+		}
+		
+		if (targetInputFieldId == "usePS") {
+			$("#useTime").val(useTime);
+		}
+		
+		if (targetInputFieldId == "useTime" && isNaN(usePS)) {
+			usePS = 1 / useTime;
+			$("#usePS").val(usePS);
+		}
+		
+		if (isNaN(useTime) || (isNaN(fireMin) && isNaN(coldMin) && isNaN(lightMin) && isNaN(physMin) && isNaN(chaosMin))) {
+			return;
+		}
+		
+		/* Default values */
+		overrideUseTime = !isNaN(overrideUseTime) && overrideUseTime != 0 ? overrideUseTime : useTime;
+		critChance = !isNaN(critChance) ? critChance : 0;
+		critMulti = !isNaN(critMulti) ? critMulti : 150;
+		acc = !isNaN(acc) ? acc : 0;
+		hitsPerUse = !isNaN(hitsPerUse) ? hitsPerUse : 1;
+		mult1 = !isNaN(mult1) ? mult1 : 1;
+		mult2 = !isNaN(mult2) ? mult2 : 1;
+		mult3 = !isNaN(mult3) ? mult3 : 1;
+		multPvP = !isNaN(multPvP) ? multPvP : 1;
+		firePen = !isNaN(firePen) ? firePen : 0;
+		coldPen = !isNaN(coldPen) ? coldPen : 0;
+		lightPen = !isNaN(lightPen) ? lightPen : 0;
+		oFireRes = !isNaN(oFireRes) ? oFireRes : 0;
+		oColdRes = !isNaN(oColdRes) ? oColdRes : 0;
+		oLightRes = !isNaN(oLightRes) ? oLightRes : 0;
+		oChaosRes = !isNaN(oChaosRes) ? oChaosRes : 0;
+		oEvasion = !isNaN(oEvasion) ? oEvasion : 0;
+		oArmour = !isNaN(oArmour) ? oArmour : 0;
+		oCritRed = !isNaN(oCritRed) ? oCritRed : 0;
+		
+		/* PvE DPS */
+		if (!isNaN(fireMin) && !isNaN(fireMax)) {
+			fireAvg = (fireMin + fireMax) / 2;
+		}
+		
+		if (!isNaN(coldMin) && !isNaN(coldMax)) {
+			coldAvg = (coldMin + coldMax) / 2;
+		}
+		
+		if (!isNaN(lightMin) && !isNaN(lightMax)) {
+			lightAvg = (lightMin + lightMax) / 2;
+		}
+		
+		if (!isNaN(physMin) && !isNaN(physMax)) {
+			physAvg = (physMin + physMax) / 2;
+		}
+		
+		if (!isNaN(chaosMin) && !isNaN(chaosMax)) {
+			chaosAvg = (chaosMin + chaosMax) / 2;
+		}
+		
+		fireAvg = !isNaN(fireAvg) ? fireAvg : 0;
+		coldAvg = !isNaN(coldAvg) ? coldAvg : 0;
+		lightAvg = !isNaN(lightAvg) ? lightAvg : 0;
+		physAvg = !isNaN(physAvg) ? physAvg : 0;
+		chaosAvg = !isNaN(chaosAvg) ? chaosAvg : 0;
+		
+		var totalRawDamage = fireAvg + coldAvg + lightAvg + physAvg + chaosAvg;
+		var totalRawDps = totalRawDamage / useTime;
+		var chanceToHitVsMonster = 1;
+		if (acc > 0) {
+			chanceToHitVsMonster = acc / (acc + Math.pow(monsterEvasion / 4, 0.8));
+		}
+		var totalRawDpsWithAcc = totalRawDps * chanceToHitVsMonster;
+		var totalRawDpsWithCrit = totalRawDpsWithAcc;
+		if (critChance > 0) {
+			totalRawDpsWithCrit = totalRawDpsWithAcc + ((totalRawDpsWithAcc * critMulti / 100 - totalRawDpsWithAcc) * chanceToHitVsMonster * critChance / 100);
+		}
+		var totalFinalDpsPvE = totalRawDpsWithCrit * mult1 * mult2 * mult3;
+		$("#rawDps").html(totalFinalDpsPvE);
+		
+		/* PvP DPS */
+		if (physMin > 0 && oArmour > 0) {																	// ARMOUR
+			physMin = physMin * (1 - oArmour / (oArmour + 10 * physMin));
+		}
+		
+		if (physMax > 0 && oArmour > 0) {
+			physMax = physMax * (1 - oArmour / (oArmour + 10 * physMax));
+		}
+		
+		dmgs["fire"] = {min: fireMin, max: fireMax, reducedArrayNCrit: [], reducedArrayCrit: [], formulaEle: true, resist: oFireRes, pen: firePen};
+		dmgs["cold"] = {min: coldMin, max: coldMax, reducedArrayNCrit: [], reducedArrayCrit: [], formulaEle: true, resist: oColdRes, pen: coldPen};
+		dmgs["light"] = {min: lightMin, max: lightMax, reducedArrayNCrit: [], reducedArrayCrit: [], formulaEle: true, resist: oLightRes, pen: lightPen};
+		dmgs["phys"] = {min: physMin, max: physMax, reducedArrayNCrit: [], reducedArrayCrit: [], formulaEle: false, resist: 0, pen: 0};
+		dmgs["chaos"] = {min: chaosMin, max: chaosMax, reducedArrayNCrit: [], reducedArrayCrit: [], formulaEle: false, resist: oChaosRes, pen: 0};
+		dmgs["combinedEle"] = {minNCrit: 0, maxNCrit: 0, minCrit: 0, maxCrit: 0, reducedArrayNCrit: [], reducedArrayCrit: [], formulaEle: true};
+		dmgs["combinedNonEle"] = {minNCrit: 0, maxNCrit: 0, minCrit: 0, maxCrit: 0, reducedArrayNCrit: [], reducedArrayCrit: [], formulaEle: false};
+		
+		var effectiveCritMulti = (100 + (critMulti - 100) * (100 - oCritRed) / 100) / 100;
+		
+		$.each(["fire", "cold", "light", "phys", "chaos"], function (index, component) {
+			if (dmgs[component].max == 0 || dmgs[component].min == 0) {
+				dmgs[component].avgRed = 0;
+				dmgs[component].minRed = 0;
+				dmgs[component].maxRed = 0;
+				return;
+			}
+			if (dmgs[component].max < dmgs[component].min) {
+				var fuckyou = dmgs[component].min;
+				dmgs[component].min = dmgs[component].max;
+				dmgs[component].max = fuckyou;
+			}
+			
+			$.each(["min", "max"], function (i, m) {
+				var dmg = dmgs[component][m];
+				dmg = dmg * (1 - (dmgs[component].resist - dmgs[component].pen) / 100);						// RESISTS
+				dmg = dmg * mult1 * mult2 * mult3;															// MULTIPLICATIVES
+				dmgs[component][m + "NCrit"] = dmg;
+				dmgs[component][m + "Crit"] = dmg * effectiveCritMulti;										// CRITMULTI
+				var combined = dmgs[component].formulaEle ? "combinedEle" : "combinedNonEle";
+				dmgs[combined][m + "NCrit"] += dmg;
+				dmgs[combined][m + "Crit"] += dmgs[component][m + "Crit"];
+			});
+		});
+		
+		function calcReduced(damage, formulaEle) {
+			var dmg;
+			switch (formulaVersion) {
+				default: 
+				case '3.8':
+					if (formulaEle) {
+						dmg = Math.pow((damage / overrideUseTime) / 150, 0.55) * 150 * overrideUseTime;
+					} else {
+						dmg = Math.pow((damage / overrideUseTime) / 90, 0.57) * 90 * overrideUseTime;
+					}
+					break;
+				case '3.7':
+					if (formulaEle) {
+						dmg = Math.pow((damage / overrideUseTime) / 180, 0.58) * 180 * overrideUseTime;
+					} else {
+						dmg = Math.pow((damage / overrideUseTime) / 100, 0.6) * 100 * overrideUseTime;
+					}
+					break;
+				case '3.3':
+					if (formulaEle) {
+						dmg = Math.pow((damage / overrideUseTime) / 290, 0.58) * 290 * overrideUseTime;
+					} else {
+						dmg = Math.pow((damage / overrideUseTime) / 125, 0.61) * 125 * overrideUseTime;
+					}
+					break;
+			}
+			return dmg * multPvP;
+		}
+		
+		$.each(["combinedEle", "combinedNonEle"], function (i, combined) {
+			$.each(["NCrit", "Crit"], function (i, c) {
+				dmgs[combined]["intervalLength" + c] = dmgs[combined]["max" + c] - dmgs[combined]["min" + c];
+				dmgs[combined]["reducedArray" + c].push(calcReduced(dmgs[combined]["min" + c], dmgs[combined].formulaEle));
+				for (var i = 1; i < 199; i++) {
+					if (dmgs[combined]["max" + c] != dmgs[combined]["min" + c]) {
+						dmgs[combined]["reducedArray" + c].push(calcReduced(dmgs[combined]["min" + c] + dmgs[combined]["intervalLength" + c] * i / 199, dmgs[combined].formulaEle));
+					} else {
+						dmgs[combined]["reducedArray" + c].push(dmgs[combined]["reducedArray" + c][0]);
+					}
+				}
+				dmgs[combined]["reducedArray" + c].push(calcReduced(dmgs[combined]["max" + c], dmgs[combined].formulaEle));
+				dmgs[combined]["avgRed" + c] = 0;
+				$.each(dmgs[combined]["reducedArray" + c], function (recordIndex, record) {
+					record = round(record);
+					dmgs[combined]["reducedArray" + c][recordIndex] = record;
+					dmgs[combined]["avgRed" + c] += record;
+				});
+				dmgs[combined]["avgRed" + c] = round(dmgs[combined]["avgRed" + c] / dmgs[combined]["reducedArray" + c].length);
+				
+				dmgs[combined]["minRed" + c] = dmgs[combined]["reducedArray" + c][0];
+				dmgs[combined]["maxRed" + c] = dmgs[combined]["reducedArray" + c][dmgs[combined]["reducedArray" + c].length - 1];
+			});
+		});
+		
+		$.each(["fire", "cold", "light", "phys", "chaos"], function (index, component) {
+			$.each(["NCrit", "Crit"], function (i, c) {
+				var combined = dmgs[component].formulaEle ? "combinedEle" : "combinedNonEle";
+				
+				dmgs[component]["minRatio" + c] = dmgs[component]["min" + c] / dmgs[combined]["min" + c];
+				dmgs[component]["maxRatio" + c] = dmgs[component]["max" + c] / dmgs[combined]["max" + c];
+				dmgs[component]["avgRatio" + c] = (dmgs[component]["minRatio" + c] + dmgs[component]["maxRatio" + c]) / 2;
+				
+				dmgs[component]["minRed" + c] = dmgs[combined]["minRed" + c] * dmgs[component]["minRatio" + c];
+				dmgs[component]["maxRed" + c] = dmgs[combined]["maxRed" + c] * dmgs[component]["maxRatio" + c];
+				dmgs[component]["avgRed" + c] = dmgs[combined]["avgRed" + c] * dmgs[component]["avgRatio" + c];
+			});
+		});
+		
+		$("#resultFireHit").html(round(dmgs["fire"]["avgRedNCrit"]));
+		$("#resultColdHit").html(round(dmgs["cold"]["avgRedNCrit"]));
+		$("#resultLightHit").html(round(dmgs["light"]["avgRedNCrit"]));
+		$("#resultPhysHit").html(round(dmgs["phys"]["avgRedNCrit"]));
+		$("#resultChaosHit").html(round(dmgs["chaos"]["avgRedNCrit"]));
+		
+		$("#resultFireMinHit").html(round(dmgs["fire"]["minRedNCrit"]));
+		$("#resultColdMinHit").html(round(dmgs["cold"]["minRedNCrit"]));
+		$("#resultLightMinHit").html(round(dmgs["light"]["minRedNCrit"]));
+		$("#resultPhysMinHit").html(round(dmgs["phys"]["minRedNCrit"]));
+		$("#resultChaosMinHit").html(round(dmgs["chaos"]["minRedNCrit"]));
+		
+		$("#resultFireMaxHit").html(round(dmgs["fire"]["maxRedNCrit"]));
+		$("#resultColdMaxHit").html(round(dmgs["cold"]["maxRedNCrit"]));
+		$("#resultLightMaxHit").html(round(dmgs["light"]["maxRedNCrit"]));
+		$("#resultPhysMaxHit").html(round(dmgs["phys"]["maxRedNCrit"]));
+		$("#resultChaosMaxHit").html(round(dmgs["chaos"]["maxRedNCrit"]));
+		
+		
+		$("#resultFireHitC").html(round(dmgs["fire"]["avgRedCrit"]));
+		$("#resultColdHitC").html(round(dmgs["cold"]["avgRedCrit"]));
+		$("#resultLightHitC").html(round(dmgs["light"]["avgRedCrit"]));
+		$("#resultPhysHitC").html(round(dmgs["phys"]["avgRedCrit"]));
+		$("#resultChaosHitC").html(round(dmgs["chaos"]["avgRedCrit"]));
+		
+		$("#resultFireMinHitC").html(round(dmgs["fire"]["minRedCrit"]));
+		$("#resultColdMinHitC").html(round(dmgs["cold"]["minRedCrit"]));
+		$("#resultLightMinHitC").html(round(dmgs["light"]["minRedCrit"]));
+		$("#resultPhysMinHitC").html(round(dmgs["phys"]["minRedCrit"]));
+		$("#resultChaosMinHitC").html(round(dmgs["chaos"]["minRedCrit"]));
+		
+		$("#resultFireMaxHitC").html(round(dmgs["fire"]["maxRedCrit"]));
+		$("#resultColdMaxHitC").html(round(dmgs["cold"]["maxRedCrit"]));
+		$("#resultLightMaxHitC").html(round(dmgs["light"]["maxRedCrit"]));
+		$("#resultPhysMaxHitC").html(round(dmgs["phys"]["maxRedCrit"]));
+		$("#resultChaosMaxHitC").html(round(dmgs["chaos"]["maxRedCrit"]));
+		
+		
+		$("#resultTotalMinHit").html(round(dmgs["combinedEle"]["minRedNCrit"] + dmgs["combinedNonEle"]["minRedNCrit"]));
+		$("#resultTotalMinHitC").html(round(dmgs["combinedEle"]["minRedCrit"] + dmgs["combinedNonEle"]["minRedCrit"]));
+		
+		$("#resultTotalMaxHit").html(round(dmgs["combinedEle"]["maxRedNCrit"] + dmgs["combinedNonEle"]["maxRedNCrit"]));
+		$("#resultTotalMaxHitC").html(round(dmgs["combinedEle"]["maxRedCrit"] + dmgs["combinedNonEle"]["maxRedCrit"]));
+		
+		$("#resultTotalAvgHit").html(round(dmgs["combinedEle"]["avgRedNCrit"] + dmgs["combinedNonEle"]["avgRedNCrit"]));
+		$("#resultTotalAvgHitC").html(round(dmgs["combinedEle"]["avgRedCrit"] + dmgs["combinedNonEle"]["avgRedCrit"]));
+		
+		var chanceToHit = 1;
+		if (acc > 0 && oEvasion > 0) {
+			chanceToHit = acc / (acc + Math.pow(oEvasion / 4, 0.8));
+		}
+		var totalAvgPvPHitDamageNCrit = dmgs["combinedEle"]["avgRedNCrit"] + dmgs["combinedNonEle"]["avgRedNCrit"];
+		var totalAvgPvPHitDamageCrit = dmgs["combinedEle"]["avgRedCrit"] + dmgs["combinedNonEle"]["avgRedCrit"];
+		var totalAvgPvPHitDamage = totalAvgPvPHitDamageNCrit + ((totalAvgPvPHitDamageCrit - totalAvgPvPHitDamageNCrit) * chanceToHit * critChance / 100);
+		
+		var totalPvPDps = totalAvgPvPHitDamage / useTime;
+		
+		var totalPvPDpsWithAcc = totalPvPDps * chanceToHit * hitsPerUse;
+		
+		$("#resultDPS").html(round(totalPvPDpsWithAcc));
+		
+		drawGraph();
+		
+		/*var totalMaxPvPHitDamage = dmgs["fire"].maxRed + dmgs["cold"].maxRed + dmgs["light"].maxRed + dmgs["phys"].maxRed + dmgs["chaos"].maxRed;
+		$("#resultTotalMaxHit").html(totalMaxPvPHitDamage);
+		$("#resultTotalMaxHitC").html(round(totalMaxPvPHitDamage * effectiveCritMulti));
+		
+		var totalAvgPvPHitDamage = dmgs["fire"].avgRed + dmgs["cold"].avgRed + dmgs["light"].avgRed + dmgs["phys"].avgRed + dmgs["chaos"].avgRed;
+		$("#resultTotalHit").html(totalAvgPvPHitDamage);
+		$("#resultTotalHitC").html(round(totalAvgPvPHitDamage * effectiveCritMulti));*/
+		
+		/*var totalRawDpsWithCrit = totalPvPDpsWithAcc;
+		if (critChance > 0) {
+			totalRawDpsWithCrit = totalPvPDpsWithAcc + ((totalPvPDpsWithAcc * effectiveCritMulti - totalPvPDpsWithAcc) * chanceToHit * critChance / 100);
+		}
+		var totalFinalDpsPvP = totalRawDpsWithCrit * mult1 * mult2 * mult3;*/
+	}
+	
+	function round(v) {
+		return Math.round(v * 100) / 100;
+	}
+	
+	function save() {
+		var saveObject = {counter: saveCounter, inputFieldData: {}};
+		$(".input").each(function (index, inputField) {
+			inputField = $(inputField);
+			var id = inputField.attr("id");
+			var data = inputField.val();
+			if (id && data) {
+				saveObject.inputFieldData[id] = data;
+			}
+		});
+		saveCounter++;
+		
+		localStorage.setItem("save" + saveObject.counter, JSON.stringify(saveObject));
+		localStorage.setItem("counter", saveCounter);
+		
+		addLoadButton(saveObject.counter, saveObject);
+	}
+	
+	function loadAll() {
+		saveCounter = parseInt(localStorage.getItem("counter"));
+		if (!saveCounter || isNaN(saveCounter) || saveCounter < 1) {
+			saveCounter = 1;
+		}
+		for (var i = 1; i <= saveCounter; i++) {
+			addLoadButton(i);
+		}
+	}
+	
+	function addLoadButton(number, saveObject) {
+		if (!saveObject) {
+			saveObject = localStorage.getItem("save" + number);
+			try {
+				saveObject = JSON.parse(saveObject);
+			} catch (e) {
+				return;
+			}
+		}
+		if (saveObject && saveObject.counter && saveObject.inputFieldData) {
+			$("#loadBox").append("<div id='saveBoxContainer" + number + "' class='saveBoxContainer'>Save" + number + "<div id='loadButton" + number + "'>Load</div><div id='deleteButton" + number + "'>X</div></div>");
+			$("#loadButton" + number).click(function () {
+				load(saveObject);
+			});
+			$("#deleteButton" + number).click(function () {
+				var confirmed = confirm("Are you sure you want to delete Save" + number + "?");
+				if (confirmed) {
+					$("#saveBoxContainer" + number).remove();
+					localStorage.removeItem("save" + number);
+				}
+			});
+		}
+	}
+	
+	function load(saveObject) {
+		$(".input").val("");
+		$.each(saveObject.inputFieldData, function (id, data) {
+			$("#" + id).val(data);
+		});
+		calc();
+	}
+	
+	function drawGraph() {
+		var c = $("#graphBox")[0];
+		var ctx = c.getContext("2d");
+		ctx.clearRect(0,0,420,400);
+		ctx.beginPath();
+		ctx.strokeStyle = "#000000";
+		ctx.fillStyle = "#000000";
+		ctx.lineWidth = 2;
+		ctx.moveTo(0,370);
+		ctx.lineTo(420,370);
+		ctx.stroke();
+		ctx.moveTo(70,0);
+		ctx.lineTo(70,400);
+		ctx.stroke();
+		
+		ctx.moveTo(90,365);
+		ctx.lineTo(90,375);
+		ctx.stroke();
+		
+		ctx.moveTo(390,365);
+		ctx.lineTo(390,375);
+		ctx.stroke();
+		
+		ctx.lineWidth = 1;
+		
+		var combineMin = 0, combineMax = 0;
+		$.each(["combinedEle", "combinedNonEle"], function(i, componentName) {
+			combineMin += dmgs[componentName]["minNCrit"];
+			combineMax += dmgs[componentName]["maxNCrit"];
+		});
+		
+		ctx.font = "bold 20px Calibri";
+		ctx.fillText(combineMin, 72, 390);
+		ctx.fillText(combineMax, 390 - ctx.measureText(combineMax).width / 2, 390);
+		
+		ctx.font = "18px Calibri";
+		ctx.fillText("PvE damage", 245 - ctx.measureText("Input damage").width / 2, 392);
+		ctx.fillText("PvP damage", 41, 25);
+		
+		var combinedDamageMaxCrit, drawMultiplier;
+		
+		$.each(["Crit", "NCrit"], function (index, c) {
+			var reducedArray = "reducedArray" + c;
+			var i = 199;
+			var combinedDamageMax;
+			combinedDamageMax = validateNumber(dmgs["combinedNonEle"][reducedArray][i]) + validateNumber(dmgs["combinedEle"][reducedArray][i]);
+			ctx.stroke();
+			ctx.closePath();
+			ctx.beginPath();
+			if (c == "Crit") {
+				combinedDamageMaxCrit = combinedDamageMax;
+				drawMultiplier = 300 / combinedDamageMaxCrit;
+				ctx.strokeStyle = "#000000";
+				ctx.fillStyle = "#000000";
+			} else {
+				ctx.strokeStyle = "#777777";
+				ctx.fillStyle = "#777777";
+			}
+			
+			ctx.font = "bold 20px Calibri";
+			ctx.fillText(Math.round(combinedDamageMax), 62 - ctx.measureText(Math.round(combinedDamageMax)).width, 375 - (combinedDamageMax * drawMultiplier));
+			var cText = c == "Crit" ? "Crit" : "Non-Crit";
+			ctx.fillText(cText, 390 - ctx.measureText(cText).width, 365 - (combinedDamageMax * drawMultiplier));
+			
+			ctx.moveTo(65,370 - (combinedDamageMax * drawMultiplier));
+			ctx.lineTo(75,370 - (combinedDamageMax * drawMultiplier));
+			ctx.stroke();
+			
+			var minDamagePositionOnYAxis = 350;
+			
+			for (i = 0; i < 200; i++) {
+				var combinedDamage = validateNumber(dmgs["combinedNonEle"][reducedArray][i]) + validateNumber(dmgs["combinedEle"][reducedArray][i]);
+				
+				if (i == 0) {
+					minDamagePositionOnYAxis = combinedDamage * drawMultiplier;
+					ctx.moveTo(90 + i * 1.5, 370 - combinedDamage * drawMultiplier);
+				}
+				ctx.lineTo(90 + i * 1.5, 370 - combinedDamage * drawMultiplier);
+				ctx.stroke();
+			}
+			
+			ctx.moveTo(65,370 - minDamagePositionOnYAxis);
+			ctx.lineTo(75,370 - minDamagePositionOnYAxis);
+			ctx.stroke();
+			
+			i = 0;
+			var combinedDamageMin = validateNumber(dmgs["combinedNonEle"][reducedArray][i]) + validateNumber(dmgs["combinedEle"][reducedArray][i]);
+			ctx.fillText(Math.round(combinedDamageMin), 62 - ctx.measureText(Math.round(combinedDamageMin)).width, 375 - minDamagePositionOnYAxis);
+		});
+		
+		// #cc0000 #4582bf #FED700 #D01690
+	}
+	
+	function validateNumber(v) {
+		v = parseFloat(v);
+		if (isNaN(v)) {
+			return 0;
+		} else {
+			return v;
+		}
+	}
+	
+	$(document).ready(function() {
+		$(".input").keyup(calc);
+		$("#saveButton").click(save);
+		$("#formula38Button").click(function () {
+			formulaVersion = '3.8';
+			$(".activeFormula").removeClass('activeFormula');
+			$("#formula38Button").addClass('activeFormula');
+			calc();
+		});
+		$("#formula37Button").click(function () {
+			formulaVersion = '3.7';
+			$(".activeFormula").removeClass('activeFormula');
+			$("#formula37Button").addClass('activeFormula');
+			calc();
+		});
+		$("#formula33Button").click(function () {
+			formulaVersion = '3.3';
+			$(".activeFormula").removeClass('activeFormula');
+			$("#formula33Button").addClass('activeFormula');
+			calc();
+		});
+		loadAll();
+		calc();
+	});
+	
+	</script>
+
+	<style type="text/css">
+
+		body {
+			background: #444D55;
+			color: white;
+			font-family: Calibri;
+			text-align: center;
+			font-size: 16px;
+		}
+		
+		.info-box {
+			margin: 6px;
+			max-width: 1000px;
+		}
+		
+		input, .button, .saveBoxContainer div {
+			background: #444444;
+			color: white;
+			border: 1px solid #CCCCCC;
+			padding: 2px;
+			display: inline-block;
+			text-align: center;
+			width: 138px;
+		}
+		
+		.activeFormula {
+			background: #44AA44;
+		}
+		
+		#saveLoadBox {
+			position: absolute;
+			top: 10px;
+			right: -130px;
+			z-index: 5;
+		}
+		
+		.button {
+			font-size: 16px;
+			font-weight: bold;
+			cursor: pointer;
+			border: 2px solid #CCCCCC;
+			display: block;
+			margin: 3px;
+		}
+		
+		.formulaButton {
+			min-width: 400px;
+		}
+		
+		.button:hover, .saveBoxContainer div:hover {
+			border-color: #999999;
+		}
+		
+		td {
+			padding: 4px;
+		}
+		
+		#cont {
+			text-align: left;
+			display: inline-block;
+			position: relative;
+		}
+		
+		*[title]:not(input) {
+			border-bottom: 1px dotted rgba(255, 255, 255, 0.7);
+		}
+		
+		.row {
+			display: block;
+		}
+		
+		.right {
+			text-align: right;
+		}
+
+		a {
+			color: #BBBBBB;
+			font-weight: bold;
+		}
+		
+		.smallW {
+			width: 20px;
+		}
+		
+		.mediumW {
+			width: 60px;
+		}
+		
+		.bigW {
+			width: 120px;
+		}
+		
+		.smallText {
+			font-size: 12px;
+		}
+		
+		.bigText {
+			font-size: 22px;
+		}
+		
+		.fire {
+			border-color: #cc0000; /*960000*/
+		}
+		
+		.cold {
+			border-color: #4582bf; /*326292*/
+		}
+		
+		.light {
+			border-color: #FED700;
+		}
+		
+		.chaos {
+			border-color: #D01690;
+		}
+		
+		.bold {
+			font-weight: bold;
+		}
+		
+		#graphBox {
+			position: absolute;
+			bottom: 200px;
+			right: 0px;
+			z-index: 10;
+			width: 420px;
+			height: 400px;
+			background: #DDDDDD;
+		}
+		
+		#formulaBox {
+			position: absolute;
+			bottom: 620px;
+			right: 0px;
+			z-index: 15;
+		}
+		
+		.saveBoxContainer {
+			padding: 5px;
+		}
+		
+		.saveBoxContainer div {
+			display: inline-block;
+			width: initial !important;
+			margin: 3px;
+			font-weight: bold;
+			cursor: pointer;
+			border: 2px solid #CCCCCC;
+		}
+		
+	</style>
+
+</head>
+<body>
+	<div id="cont">
+		<h2>PvP Tooltip DPS calculator by Markusz</h2>
+		<div class="info-box">
+			<a href="https://i.imgur.com/qVuBjlj.png" style="font-size: 18px;" target="_blank">Click here for visual guide</a><br>
+			<b>Hover over the underlined labels for details!</b><br>
+			More explanation at the bottom.<br>
+			<a href="https://www.pathofexile.com/forum/view-thread/1615522">Forum thread</a>
+		</div>
+		<table>
+			<tbody>
+				<tr>
+					<td colspan="4">
+						<span title="The tooltip damage with lowest and highest possible damage brackets">Damage per use (min - max)</span>:
+					</td>
+				</tr>
+				<tr>
+					<td>
+						Fire:
+					</td><td>
+						<input id="fireMin" class="input mediumW fire" value="4000"> - <input id="fireMax" class="input mediumW fire" value="6000">
+					</td><td>
+						<span title="Resistance penetration">penetration:</span> <input id="firePen" class="input smallW fire" value="37">
+					</td>
+				</tr>
+				<tr>
+					<td>
+						Cold:
+					</td><td>
+						<input id="coldMin" class="input mediumW cold"> - <input id="coldMax" class="input mediumW cold">
+					</td><td>
+						<span title="Resistance penetration">penetration:</span> <input id="coldPen" class="input smallW cold" value="37">
+					</td>
+				</tr>
+				<tr>
+					<td>
+						Lightning:
+					</td><td>
+						<input id="lightMin" class="input mediumW light"> - <input id="lightMax" class="input mediumW light">
+					</td><td>
+						<span title="Resistance penetration">penetration:</span> <input id="lightPen" class="input smallW light" value="37">
+					</td>
+				</tr>
+				<tr>
+					<td>
+						Physical:
+					</td><td>
+						<input id="physMin" class="input mediumW"> - <input id="physMax" class="input mediumW">
+					</td>
+				</tr>
+				<tr>
+					<td>
+						Chaos:
+					</td><td>
+						<input id="chaosMin" class="input mediumW chaos"> - <input id="chaosMax" class="input mediumW chaos">
+					</td>
+				</tr>
+				<tr>
+					<td>
+						<span title="attacks or casts">Uses</span> <span title="more accurate than use time because rounding ingame is better on the Character panel">per second</span>: 
+					</td><td>
+						<input id="usePS" class="input" value="3">
+					</td><td>
+						or <span title="attack time or cast time">use time</span>: 
+					</td><td>
+						<input id="useTime" class="input">
+					</td>
+				</tr>
+				<tr>
+					<td>
+						OVERRIDE <span title="attack or cast">use</span> time: 
+					</td><td>
+						<input id="overrideUseTime" class="input">
+					</td><td colspan="2">
+						for the formula (check <a href="http://pathofexile.gamepedia.com/Player_versus_player#PvP_Damage_scaling" target="_blank">here</a> if you need this)
+					</td>
+				</tr>
+				<tr>
+					<td>
+						Critical strike chance:
+					</td><td>
+						<input id="critChance" class="input">
+					</td><td>
+						Critical strike multiplier:
+					</td><td>
+						<input id="critMulti" class="input" value="200">
+					</td>
+				</tr>
+				<tr>
+					<td>
+						Accuracy rating:
+					</td><td>
+						<input id="acc" class="input">
+					</td><td>
+						(empty = always hits)
+					</td>
+				</tr>
+				<tr>
+					<td>
+						<span title="format examples: 20% more: 1.2    20% less: 0.8">Other MORE / LESS multipliers*:</span>
+					</td><td>
+						<input id="mult1" class="input mediumW">
+					</td><td>
+						<input id="mult2" class="input mediumW">
+					</td><td>
+						<input id="mult3" class="input mediumW">
+					</td>
+				</tr>
+				<tr>
+					<td>
+						<span title="You have to know your skill how many times it hits per attack/cast, this number directly multiplies your PvP dps">Hits per use:</span>
+					</td><td>
+						<input id="hitsPerUse" class="input" value="1">
+					</td>
+				</tr>
+				<tr>
+					<td colspan="5" class="smallText">
+						*Only modifiers that are NOT displayed in the flat values above, such as Flameblast stage multiplier,<br>Far shot node from ascendancy passive, Opponent is shocked, Opponent has fortify etc
+					</td>
+				</tr>
+				<tr>
+					<td>
+						<span title="format examples: 20% more: 1.2    20% less: 0.8">PvP multipliers*:</span>
+					</td><td>
+						<input id="multPvP" class="input mediumW">
+					</td>
+				</tr>
+				<tr>
+					<td colspan="5" class="smallText">
+						*<b>IF</b> your skill has a separate PvP reduction mentioned <a href="http://pathofexile.gamepedia.com/Player_versus_player#PvP_Damage_scaling" target="_blank">in this post</a> you have to enter it <span title="this is the only modifier that is applied after PvP reduction is calculated, and not before">in this field</span>
+					</td>
+				</tr>
+				<tr>
+					<td>
+						<br><b>Opponent's stats:</b>
+					</td>
+				</tr>
+				<tr>
+					<td>
+						Resistances:
+					</td><td>
+						<input id="oFireRes" class="input mediumW fire" value="75" title="Fire">
+					</td><td>
+						<input id="oColdRes" class="input mediumW cold" value="75" title="Cold">
+					</td><td>
+						<input id="oLightRes" class="input mediumW light" value="75" title="Lightning">
+					</td><td>
+						<input id="oChaosRes" class="input mediumW chaos" value="75" title="Chaos">
+					</td>
+				</tr>
+				<tr>
+					<td>
+						Evasion Rating: 
+					</td><td>
+						<input id="oEvasion" class="input mediumW">
+					</td><td>
+						Armour:
+					</td><td>
+						<input id="oArmour" class="input mediumW">
+					</td>
+				</tr>
+				<tr>
+					<td colspan="2">
+						<span title="Belt of the Deceiver and/or the Indomitable passive node values">Reduced extra damage from critical strikes:</span>
+					</td><td>
+						<input id="oCritRed" class="input mediumW">
+					</td>
+				</tr>
+				<tr>
+					<td>
+						<br><b>Results:</b>
+					</td>
+				</tr>
+				<tr>
+					<td>
+						<span title="applies in pve, this should be your tooltip ingame">Raw original dps: </span>
+					</td><td>
+						<div id="rawDps">15000</div>
+					</td><td class="smallText" colspan="3">
+						(4000 monster evasion is assumed if you entered accuracy value)
+					</td>
+				</tr>
+				<tr class="bold bigText">
+					<td>
+						Total combined PvP DPS:
+					</td><td>
+						<div id="resultDPS">1449.36</div>
+					</td><td colspan="2">
+						
+					</td>
+				</tr>
+				<tr>
+					<td>
+						<span title="accuracy not included, but resistances and armour are included">Damage per hit in PvP</span>
+					</td><td>
+						Non-critical hit
+					</td><td>
+						Critical hit
+					</td>
+				</tr>
+				<tr>
+					<td class="bold">
+						Average combined damage: 
+					</td><td>
+						<div id="resultTotalAvgHit" class="bold bigText">483.12</div>
+					</td><td>
+						<div id="resultTotalAvgHitC" class="bold bigText">707.33</div>
+					</td>
+				</tr>
+				<tr>
+					<td>
+						Average fire damage: 
+					</td><td>
+						<div id="resultFireHit">483.12</div>
+					</td><td>
+						<div id="resultFireHitC">707.33</div>
+					</td>
+				</tr>
+				<tr>
+					<td>
+						Average cold damage: 
+					</td><td>
+						<div id="resultColdHit"></div>
+					</td><td>
+						<div id="resultColdHitC"></div>
+					</td>
+				</tr>
+				<tr>
+					<td>
+						Average lightning damage: 
+					</td><td>
+						<div id="resultLightHit"></div>
+					</td><td>
+						<div id="resultLightHitC"></div>
+					</td>
+				</tr>
+				<tr>
+					<td>
+						Average physical damage: 
+					</td><td>
+						<div id="resultPhysHit"></div>
+					</td><td>
+						<div id="resultPhysHitC"></div>
+					</td>
+				</tr>
+				<tr>
+					<td>
+						Average chaos damage: 
+					</td><td>
+						<div id="resultChaosHit"></div>
+					</td><td>
+						<div id="resultChaosHitC"></div>
+					</td>
+				</tr>
+				<tr>
+					<td>
+						Minimum combined damage: 
+					</td><td>
+						<div id="resultTotalMinHit">428.04</div>
+					</td><td>
+						<div id="resultTotalMinHitC">626.69</div>
+					</td>
+				</tr>
+				<tr>
+					<td>
+						Minimum fire damage: 
+					</td><td>
+						<div id="resultFireMinHit">428.04</div>
+					</td><td>
+						<div id="resultFireMinHitC">626.69</div>
+					</td>
+				</tr>
+				<tr>
+					<td>
+						Minimum cold damage: 
+					</td><td>
+						<div id="resultColdMinHit"></div>
+					</td><td>
+						<div id="resultColdMinHitC"></div>
+					</td>
+				</tr>
+				<tr>
+					<td>
+						Minimum lightning damage: 
+					</td><td>
+						<div id="resultLightMinHit"></div>
+					</td><td>
+						<div id="resultLightMinHitC"></div>
+					</td>
+				</tr>
+				<tr>
+					<td>
+						Minimum physical damage: 
+					</td><td>
+						<div id="resultPhysMinHit"></div>
+					</td><td>
+						<div id="resultPhysMinHitC"></div>
+					</td>
+				</tr>
+				<tr>
+					<td>
+						Minimum chaos damage: 
+					</td><td>
+						<div id="resultChaosMinHit"></div>
+					</td><td>
+						<div id="resultChaosMinHitC"></div>
+					</td>
+				</tr>
+				<tr>
+					<td>
+						Maximum combined damage: 
+					</td><td>
+						<div id="resultTotalMaxHit">534.98</div>
+					</td><td>
+						<div id="resultTotalMaxHitC">783.25</div>
+					</td>
+				</tr>
+				<tr>
+					<td>
+						Maximum fire damage: 
+					</td><td>
+						<div id="resultFireMaxHit">534.98</div>
+					</td><td>
+						<div id="resultFireMaxHitC">783.25</div>
+					</td>
+				</tr>
+				<tr>
+					<td>
+						Maximum cold damage: 
+					</td><td>
+						<div id="resultColdMaxHit"></div>
+					</td><td>
+						<div id="resultColdMaxHitC"></div>
+					</td>
+				</tr>
+				<tr>
+					<td>
+						Maximum lightning damage: 
+					</td><td>
+						<div id="resultLightMaxHit"></div>
+					</td><td>
+						<div id="resultLightMaxHitC"></div>
+					</td>
+				</tr>
+				<tr>
+					<td>
+						Maximum physical damage: 
+					</td><td>
+						<div id="resultPhysMaxHit"></div>
+					</td><td>
+						<div id="resultPhysMaxHitC"></div>
+					</td>
+				</tr>
+				<tr>
+					<td>
+						Maximum chaos damage: 
+					</td><td>
+						<div id="resultChaosMaxHit"></div>
+					</td><td>
+						<div id="resultChaosMaxHitC"></div>
+					</td>
+				</tr>
+			</tbody>
+		</table>
+		<div id="saveLoadBox">
+			<div id="saveButton" class="button">Save</div>
+			<div id="loadBox">
+			</div>
+		</div>
+		<div id="formulaBox">
+			<div id="formula38Button" class="button formulaButton activeFormula">Most recent formula version 3.8 or newer</div>
+			<div id="formula37Button" class="button formulaButton">Formula version 3.4 - 3.7</div>
+			<div id="formula33Button" class="button formulaButton">Formula version 3.3 and before</div>
+		</div>
+		<canvas id="graphBox" width="420" height="400"></canvas>
+		<div class="info-box">
+			For inputs use the numbers you see ingame on the Character panel 
+under offense (don't use PoB values because those numbers already 
+include penetration) as shown in the visual guide at the top<br>
+			The calculator is always accurate for simple single hitting skills 
+like Heavy Strike, Split Arrow, Ice nova etc. For skills that deal 
+multiple hits per one attack/cast like Blast Rain, Firestorm, Volatile 
+dead you have to use your brain, figure out how many times it hits per 
+cast/attack and enter it in the "Hits per use" box.<br>
+			Uses per second is the inverse of use time, for example if you attack
+ 2 times per second, 2 will be the uses per second, and the use time is 
+0.5 (aka T value), it is enough to enter only one of them. but you have 
+to at least fill in one, and one damage bracket at the top to get a 
+result at the bottom.<br>
+		</div>
+	</div>
+
+
+
+
+
+</body></html>
